@@ -41,9 +41,41 @@
         public static Board Custom()
         {
             Board board = new Board();
-            board[7, 7] = new King(Player.White);
-            board[1, 6] = new King(Player.Black);
-            board[6, 2] = new Queen(Player.Black);
+            board[0, 0] = new Rook(Player.Black);
+            board[0, 1] = new Knight(Player.Black);
+            board[0, 2] = new Bishop(Player.Black);
+            board[0, 3] = new Queen(Player.Black);
+            board[0, 4] = new King(Player.Black);
+            board[3, 2] = new Bishop(Player.Black);
+            board[4, 4] = new Knight(Player.Black);
+            board[0, 7] = new Rook(Player.Black);
+            board[1, 0] = new Pawn(Player.Black);
+            board[1, 1] = new Pawn(Player.Black);
+            board[1, 2] = new Pawn(Player.Black);
+            board[1, 3] = new Pawn(Player.Black);
+            
+            board[1, 5] = new Pawn(Player.Black);
+            board[1, 6] = new Pawn(Player.Black);
+            board[1, 7] = new Pawn(Player.Black);
+
+            //White Pieces
+            board[7, 0] = new Rook(Player.White);
+            board[7, 1] = new Knight(Player.White);
+            board[7, 2] = new Bishop(Player.White);
+            board[7, 3] = new Queen(Player.White);
+            board[7, 4] = new King(Player.White);
+            board[7, 5] = new Bishop(Player.White);
+            board[5, 5] = new Knight(Player.White);
+            board[7, 7] = new Rook(Player.White);
+            board[6, 0] = new Pawn(Player.White);
+            board[6, 1] = new Pawn(Player.White);
+            board[6, 2] = new Pawn(Player.White);
+            
+            board[3, 4] = new Pawn(Player.White);
+            board[6, 5] = new Pawn(Player.White);
+            board[6, 6] = new Pawn(Player.White);
+            board[6, 7] = new Pawn(Player.White);
+
             return board;
         }
 

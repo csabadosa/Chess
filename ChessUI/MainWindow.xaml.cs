@@ -15,6 +15,7 @@ public partial class MainWindow : Window
 
     private GameState gameState;
     private Position selectedPos = null;
+    private Move lastMove = null;
 
     private ChessBot chessBot;
 
@@ -127,6 +128,9 @@ public partial class MainWindow : Window
         DrawBoard(gameState.Board);
         SetCursor(gameState.CurrentPlayer);
 
+        HideLastMove();
+        lastMove = move;
+        ShowLastMove();
         if (gameState.IsGameOver())
         {
             ShowGameOver();
@@ -135,9 +139,19 @@ public partial class MainWindow : Window
         {
             if (gameState.CurrentPlayer == Player.Black)
             {
-                gameState.MakeMove(chessBot.GetBotMove(gameState));
+                Move botMove = chessBot.GetBotMove(gameState);
+                gameState.MakeMove(botMove);
                 DrawBoard(gameState.Board);
                 SetCursor(gameState.CurrentPlayer);
+
+                HideLastMove();
+                lastMove = botMove;
+                ShowLastMove();
+
+                if (gameState.IsGameOver())
+                {
+                    ShowGameOver();
+                }
             }
         }
     }
@@ -286,5 +300,23 @@ public partial class MainWindow : Window
         }
 
         Point point = e.GetPosition(BoardGrid);
+    }
+
+    private void ShowLastMove()
+    {
+        if(lastMove != null)
+        {
+            highlights[lastMove.FromPos.Row, lastMove.FromPos.Column].Fill = new SolidColorBrush(Color.FromArgb(150, 255, 255, 125));
+            highlights[lastMove.ToPos.Row, lastMove.ToPos.Column].Fill = new SolidColorBrush(Color.FromArgb(150, 255, 255, 125));
+        }
+    }
+
+    private void HideLastMove()
+    {
+        if (lastMove != null)
+        {
+            highlights[lastMove.FromPos.Row, lastMove.FromPos.Column].Fill = Brushes.Transparent;
+            highlights[lastMove.ToPos.Row, lastMove.ToPos.Column].Fill = Brushes.Transparent;
+        }
     }
 }

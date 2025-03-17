@@ -9,47 +9,50 @@ namespace ChessLogic
 {
     public class ChessBot
     {
-        private readonly int Depth = 2;
+        private readonly int Depth = 3;
         private int iterationCount = 0;
 
         float[,] squareValues = new float[8, 8]
         {
             { 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f},
             { 0.00f, 0.00f, 0.10f, 0.10f, 0.10f, 0.10f, 0.00f, 0.00f},
-            { -0.05f, 0.00f, 0.15f, 0.20f, 0.20f, 0.15f, 0.00f, -0.05f},
-            { 0.00f, 0.00f, 0.20f, 0.25f, 0.25f, 0.15f, 0.00f, 0.00f},
-            { 0.00f, 0.00f, 0.20f, 0.25f, 0.25f, 0.15f, 0.00f, 0.00f},
-            { 0.00f, 0.00f, 0.15f, 0.20f, 0.20f, 0.15f, 0.00f, 0.00f},
+            { -0.05f, 0.00f, 0.15f, 0.25f, 0.25f, 0.15f, 0.00f, -0.05f},
+            { 0.00f, 0.00f, 0.25f, 0.50f, 0.50f, 0.25f, 0.00f, 0.00f},
+            { 0.00f, 0.00f, 0.25f, 0.50f, 0.50f, 0.25f, 0.00f, 0.00f},
+            { -0.05f, 0.00f, 0.15f, 0.25f, 0.25f, 0.15f, 0.00f, -0.05f},
             { 0.00f, 0.00f, 0.15f, 0.15f, 0.15f, 0.15f, 0.00f, 0.00f},
             { 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f},
         };
         public Move GetBotMove(GameState gameState)
         {
-            int itC = 0;
             Move finalMove = null;
             Player player = gameState.CurrentPlayer;
-            float finalVal = player == Player.White ? -1000 : 1000;
+            float finalVal = player == Player.White ? -10000 : 10000;
             GameState gameCopy = CloneGameState(gameState);
             IEnumerable<Move> moves = gameState.AllLegalMovesFor(gameState.CurrentPlayer);
             foreach (Move move in moves)
             {
-                System.Diagnostics.Debug.WriteLine(itC++);
                 gameCopy.MakeMove(move);
                 float val = 0;
                 if (gameCopy.IsGameOver())
                 {
-                    if(gameCopy.Result.Reason == EndReason.Checkmate)
+                    if (gameCopy.Result.Reason == EndReason.Checkmate)
                     {
                         return move;
-                    } else
+                    }
+                    else
                     {
                         val = 0;
                     }
                 }
                 else
                 {
-                    val = SearchForMove(gameCopy, 0, gameState.CurrentPlayer == Player.White);
+                    val = SearchForMove(gameCopy, 0, gameState.CurrentPlayer == Player.White, -10000, 10000);
                 }
+                System.Diagnostics.Debug.WriteLine("Val: ");
+                System.Diagnostics.Debug.WriteLine(val);
+                System.Diagnostics.Debug.WriteLine("Row: " + move.FromPos.Row);
+                System.Diagnostics.Debug.WriteLine("Col: " + move.FromPos.Column);
                 gameCopy = CloneGameState(gameState);
 
                 switch (player)
@@ -73,18 +76,19 @@ namespace ChessLogic
                         break;
                 }
             }
-
+            System.Diagnostics.Debug.WriteLine("Final val: " + finalVal);
+            
             return finalMove;
         }
 
-        private float SearchForMove(GameState gameState, int currentDepth, bool minLevel)
+        private float SearchForMove(GameState gameState, int currentDepth, bool minLevel, float alpha, float beta)
         {
-            System.Diagnostics.Debug.WriteLine(iterationCount++);
+            //System.Diagnostics.Debug.WriteLine(iterationCount++);
             if (iterationCount == 341)
             {
-                System.Diagnostics.Debug.WriteLine(iterationCount);
+                //System.Diagnostics.Debug.WriteLine(iterationCount);
             }
-            System.Diagnostics.Debug.WriteLine(gameState.CurrentPlayer);
+            //System.Diagnostics.Debug.WriteLine(gameState.CurrentPlayer);
             if (currentDepth == Depth)
             {
                 return EvaluateBoard(gameState.Board);
@@ -99,7 +103,6 @@ namespace ChessLogic
             foreach (Move moveCandidate in moves)
             {
                 gameCopy.MakeMove(moveCandidate);
-                currentDepth++;
                 float val = 0;
                 if (gameCopy.IsGameOver())
                 {
@@ -108,39 +111,44 @@ namespace ChessLogic
                         if (minLevel)
                         {
                             val = -1000;
-                        } 
+                        }
                         else
                         {
                             val = 1000;
                         }
-                    } 
+                    }
                     else
                     {
                         val = 0;
                     }
-                } 
+                }
                 else
                 {
-                    val = SearchForMove(gameCopy, currentDepth, !minLevel);
+                    val = SearchForMove(gameCopy, currentDepth + 1, !minLevel, alpha, beta);
                 }
 
                 gameCopy = CloneGameState(gameState);
-                currentDepth--;
+
+                if (moveCandidate.FromPos.Row == 1 && moveCandidate.FromPos.Column == 4)
+                {
+                    System.Diagnostics.Debug.WriteLine("Pawn val: ");
+                }
 
                 if (minLevel)
                 {
-                    if (val < min)
-                    {
-                        min = val;
-                    }
+                    min = Math.Min(min, val);
+                    beta = Math.Min(beta, val);
                 }
                 else
                 {
-                    if (val > max)
-                    {
-                        max = val;
-                    }
+                    max = Math.Max(max, val);
+                    alpha = Math.Max(alpha, val);   
                 }
+
+                if (beta <= alpha)
+                {
+                    break;
+                }   
             }
             if (minLevel)
             {
@@ -171,10 +179,18 @@ namespace ChessLogic
                         }
                         else if (piece.Type == PieceType.Bishop)
                         {
+                            if(!piece.HasMoved)
+                            {
+                                white -= 0.25f;
+                            }
                             white += 3;
                         }
                         else if (piece.Type == PieceType.Knight)
                         {
+                            if (!piece.HasMoved)
+                            {
+                                white -= 0.25f;
+                            }
                             white += 3;
                         }
                         else if (piece.Type == PieceType.Rook)
@@ -188,17 +204,25 @@ namespace ChessLogic
                     }
                     else
                     {
-                        white += squareValues[i, j];
+                        black += squareValues[i, j];
                         if (piece.Type == PieceType.Pawn)
                         {
                             black += 1;
                         }
                         else if (piece.Type == PieceType.Bishop)
                         {
+                            if (!piece.HasMoved)
+                            {
+                                black -= 0.25f;
+                            }
                             black += 3;
                         }
                         else if (piece.Type == PieceType.Knight)
                         {
+                            if (!piece.HasMoved)
+                            {
+                                black -= 0.25f;
+                            }
                             black += 3;
                         }
                         else if (piece.Type == PieceType.Rook)
